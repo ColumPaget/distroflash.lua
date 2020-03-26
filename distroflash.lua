@@ -255,6 +255,7 @@ end
 
 function SetupDest()
 local devname, devtype, removable, mounted
+local from, to
 
 	--diskname is the name of the parent disk for a destination. For disk destinations devname and diskname will
 	--be the same. For partitions, for example /dev/sda1,  devname=sda1 and diskname=sda
@@ -288,7 +289,11 @@ local devname, devtype, removable, mounted
 		Settings.Format=true
 	end
 
-	filesys.copy(Settings.SyslinuxDir .."/".. Settings.SyslinuxMBR, "/dev/"..diskname) 
+	from=Settings.SyslinuxDir .."/".. Settings.SyslinuxMBR
+	to="/dev/"..diskname
+	print("install mbr: ".. from.. " to "..to)
+	filesys.copy(from, to) 
+
 	Settings.tmpMount=("/tmp/.usb_install_"..tostring(process.pid()))
 	filesys.mkdir(Settings.tmpMount)
 	Settings.MountPoint=Settings.tmpMount
@@ -415,7 +420,7 @@ item=toks:next()
 while item ~= nil
 do
 print("Install Syslinux: "..item)
-filesys.copy(Settings.SyslinuxDir..item, Settings.MountPoint.."/boot/"..item)
+filesys.copy(Settings.SyslinuxDir.."/"..item, Settings.MountPoint.."/boot/"..item)
 item=toks:next()
 end
 end
@@ -423,7 +428,7 @@ end
 
 function ActivateSyslinux()
 print("Activate syslinux")
-str=Settings.programs["syslinux"] .. " -m --install -d /boot "..Settings.InstallDest
+str=Settings.programs["syslinux"] .. " --install -d /boot "..Settings.InstallDest
 os.execute(str)
 print("Activated: "..str)
 end
@@ -432,7 +437,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="1.0"
+Settings.Version="1.1"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)

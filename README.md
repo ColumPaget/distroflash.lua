@@ -76,6 +76,8 @@ distroflash.lua has been seen to work with the following distributions. If anyon
 
 ## Perfect, runs live and installs from live environment 
 
+  * AntiX Linux 19
+  * MX Linux 19.1
   * Bodhi Linux 5.0.0
   * Trisquel-mini 8.0
   * Linux Mint 19.3
@@ -88,16 +90,16 @@ distroflash.lua has been seen to work with the following distributions. If anyon
  
 ## Finiky, can be made to install
  
-  * Salix 14.2     - has to be told to install from harddrive, and given both the device name and path to files on disk
-  * Slax 9.11.0    - no automated installer, apparently can be installed from live by copying files manually
-  * Gentoo         - no automated installer, apparently can be installed manually from live
+  * Salix 14.2                - has to be told to install from harddrive, and given both the device name and path to files on disk
+  * Slax 9.11.0               - no automated installer, apparently can be installed from live by copying files manually
+  * Gentoo                    - no automated installer, apparently can be installed manually from live
+  * Damn Small Linux 4.4.10   - difficult to use installer, not had a successful install from it yet, but it may work.
  
 ## Live environment only
  
   * Kali Linux 2020.1
   * Clonezilla 
   * Fatdog Linux 721
-  * Damn Small Linux 4.4.10  
   * Puppy Linux slacko 6.3.2     - installs, but installed system doesn't seem to boot
   * Puppy Linux tahr 6.0.5       - installs, but installed system doesn't seem to boot
   * Puppy Linux xenialpup 7.5    - installs, but installed system doesn't seem to boot
