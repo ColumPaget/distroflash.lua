@@ -1,7 +1,7 @@
 SYNOPSIS
 ========
 
-distroflash.lua is a linux command-line utility for making multiboot usb disks that contain multiple linux distributions from .iso files. It does this by examining the contents of .iso files, copying them to a directory on the destination media, and setting up a syslinux bootloader to load them. It requires syslinux, lua, libUseful and libUseful-lua to be installed.
+distroflash.lua is a linux command-line utility for making multiboot usb disks that contain multiple linux distributions from .iso files. It does this by examining the contents of .iso files, copying them to a directory on the destination media, and setting up a syslinux bootloader to load them. It requires syslinux, lua, libUseful and libUseful-lua to be installed. Currently it does not support UEFI boot, and will install distros in 'installer' form by default, falling back to 'live' for those distros where the installation process doesn't work. It does not yet install both 'installer' and 'live' forms for distros that support that.
 
 distroflash.lua will try to avoid acting on mounted or non-removable media, although non-removable media can be written to using the '-force' option.
 
@@ -87,10 +87,20 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * KNOPPIX 8.6.1
   * Peppermint 10
   * Porteus 3.2.2
+	* ArchLinux 2020.03.01
+	* PCLinuxOS 2020.02
  
 ## Finiky, can be made to install
  
+	* TinyCorePlus              - has to be told path to core.gz to install (see 'Finiky installs' below)
+  * Puppy Linux slacko 6.3.2  - complex install process (see 'Finiky installs' below)
+  * Puppy Linux tahr 6.0.5    - complex install process (see 'Finiky installs' below)
   * Salix 14.2                - has to be told to install from harddrive, and given both the device name and path to files on disk
+	* Calculate Linux           - has been seen to install to a vm. Installer has issues with some graphics cards.
+	* CentOS Linux 8.1          - has been seen to install to a vm. Installer crashes on some hardware.
+
+## Runs live. Might also install from usb to hard-drive if you really know how and the wind is in the right direction
+
   * Slax 9.11.0               - no automated installer, apparently can be installed from live by copying files manually
   * Gentoo                    - no automated installer, apparently can be installed manually from live
   * Damn Small Linux 4.4.10   - difficult to use installer, not had a successful install from it yet, but it may work.
@@ -99,12 +109,18 @@ distroflash.lua has been seen to work with the following distributions. If anyon
  
   * Kali Linux 2020.1
   * Clonezilla 
+  * SystemRescueCD 
   * Fatdog Linux 721
-  * Puppy Linux slacko 6.3.2     - installs, but installed system doesn't seem to boot
-  * Puppy Linux tahr 6.0.5       - installs, but installed system doesn't seem to boot
+	* Nst Linux 30-11210           - runs live, but installer refuses to install from mounted usb key
   * Puppy Linux xenialpup 7.5    - installs, but installed system doesn't seem to boot
   * Slitaz-rolling               - installer can't find installation files
 
 
 
+## Finiky installs
 
+TinyCorePlus
+: TinyCorePlus linux has an issue where the installer will ask for the location of the `core.gz` file. Search under '/mnt/' to find this. Available partitions will usually be mounted under '/mnt' (e.g. /mnt/sdb1) and you're looking for a directory named something like 'CorePlus-current' (or whatever your original .iso file was called) that contains a 'boot' directory, which then contains 'core.gz'. Once that has been selected the install should continue successfully.
+
+Puppy Linux
+: Puppy linux has a very complex install system. Puppy versions 'slacko' and 'tahr' have been seen to install. The 'xenialpup' version hasn't worked, and seems to have a problem setting up the bootloader for the installed OS. The installer in all versions will ask you to find the install files. First click on the icons for the available disk partitions at the bottom of the desktop to make sure that these partitions are mounted under '/mnt'. You should then be able to browse under /mnt to find a directory with the same name as the .iso file that you pointed distroflash to. Within that directory you should find the files that the installer is asking for. Select one of them and continue.  

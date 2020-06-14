@@ -111,13 +111,29 @@ end
 end
 
 
+-- a list of file patterns that exist for a given ISO/distro
+function ISOFindIDFiles(distro, patterns)
+local toks, pattern
+
+toks=strutil.TOKENIZER(patterns, ",")
+pattern=toks:next()
+while pattern ~= nil
+do
+	files=FindFiles(distro.mnt..pattern)
+	if #files == 0 then return false end
+	pattern=toks:next()
+end
+
+return true
+end
+
+
 function CategorizeISO(distro)
 local files, i, details
 
 for i,details in ipairs(Settings.iso_list)
 do
-	files=FindFiles(distro.mnt..details.pattern)
-	if #files > 0 
+	if ISOFindIDFiles(distro, details.pattern) == true
 	then 
 		distro.name=details.name
 		if strutil.strlen(details.kernel) > 0 then distro.kernel=ISOFindItem(details.kernel, distro.mnt) end
@@ -146,7 +162,7 @@ distro.root_files={}
 mnt="/tmp/.iso_"..process.getpid()
 filesys.mkdir(mnt)
 
-os.execute(Settings.programs["mount"] .. " -oloop '"..path.."' '"..mnt.."'")
+os.execute(Settings.programs["mount"] .. " -oloop,ro '"..path.."' '"..mnt.."'")
 
 distro.mnt=mnt.."/"
 CategorizeISO(distro)
@@ -187,7 +203,7 @@ end
 
 
 function CheckDevMounted(devname)
-local S, str, toks
+local S, str, toks, mount, devpath
 local mounted=false
 
 S=stream.STREAM("/proc/mounts", "r")
@@ -198,7 +214,10 @@ then
 	do
 		str=strutil.trim(str)
 		toks=strutil.TOKENIZER(str, "\\S")
-		if toks:next() == "/dev/"..devname 
+
+		devpath="/dev/"..devname
+		mount=toks:next()
+		if string.sub(mount, 1, strutil.strlen(devpath)) == devpath
 		then
 			mounted=true
 			break
@@ -251,7 +270,30 @@ return diskname, devname, devtype, removable, mounted
 end
 
 
+function PartitionUUID(partition)
+local S, str, toks, tok
 
+S=stream.STREAM("cmd:"..Settings.programs["blkid"].. " "..partition)
+if S ~= nil
+then
+	str=S:readln()
+	S:close()
+	toks=strutil.TOKENIZER(str, " ")
+	tok=toks:next()
+	while tok ~= nil
+	do
+	if string.sub(tok, 1, 5) == "UUID="
+	then
+		str=strutil.stripQuotes(string.sub(tok, 6))
+		return str
+	end
+	tok=toks:next()
+	end
+end
+
+	
+return ""
+end
 
 function SetupDest()
 local devname, devtype, removable, mounted
@@ -260,6 +302,13 @@ local from, to
 	--diskname is the name of the parent disk for a destination. For disk destinations devname and diskname will
 	--be the same. For partitions, for example /dev/sda1,  devname=sda1 and diskname=sda
 	diskname,devname,devtype,removable,mounted=DeviceInfoFromSys(Settings.InstallDest)
+
+	if devtype == ""
+	then
+		Out:puts("~rERROR:~0 "..Settings.InstallDest.." cannot find device!\n")
+		Out:reset()
+		os.exit()
+	end
 
 	if removable ~= true and Settings.Force ~=true
 	then
@@ -270,7 +319,7 @@ local from, to
 
 	if mounted == true
 	then
-		Out:puts("~rERROR:~0 "..Settings.InstallDest.." is mounted!\n")
+		Out:puts("~rERROR:~0 "..Settings.InstallDest.." (or partitions within it) is mounted!\n")
 		Out:reset()
 		os.exit()
 	end
@@ -289,6 +338,7 @@ local from, to
 		Settings.Format=true
 	end
 
+
 	from=Settings.SyslinuxDir .."/".. Settings.SyslinuxMBR
 	to="/dev/"..diskname
 	print("install mbr: ".. from.. " to "..to)
@@ -304,6 +354,9 @@ local from, to
 	print("Format Partition using: ".. str)
 	os.execute(str)
 	end
+
+	-- must do this here, in case we reformatted the disk. Every new filesystem has a new uuid.
+	Settings.DestUUID=PartitionUUID(Settings.InstallDest)
 
 	if filesys.mount(Settings.InstallDest, Settings.MountPoint, "vfat") ==true
 	then
@@ -327,10 +380,12 @@ if strutil.strlen(distro.initrd) > 0 then S:writeln("INITRD ".."/"..name..distro
 if install_type=="live"
 then
 	str=string.gsub(distro.append_live, "%$%(distdir%)", name)
+	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
 	S:writeln("APPEND "..str.."\n")
 elseif strutil.strlen(distro.append) > 0
 then
 	str=string.gsub(distro.append, "%$%(distdir%)", name)
+	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
 	S:writeln("APPEND "..str.."\n")
 end
 
@@ -437,7 +492,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="1.1"
+Settings.Version="2.0"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)
@@ -449,11 +504,24 @@ Settings.distro_file="/etc/distroflash.conf"
 end
 
 
+
 function CleanUp()
 
 filesys.unmount(Settings.MountPoint)
 if strutil.strlen(Settings.tmpMount) > 0 then filesys.rmdir(Settings.tmpMount) end
 end
+
+
+
+function DisplayVersion()
+
+print("distroflash.lua. version: "..Settings.Version)
+print("")
+
+Out:reset()
+os.exit(0)
+end
+
 
 
 function DisplayHelp()
@@ -469,6 +537,9 @@ print("-c <path>         path to distroflash.conf config file, overriding defaul
 print("-force            if distroflash objects that a device is not removable (not all devices set this flag) this option forces using the device")
 print("-format           by default distroflash.lua will not format a partition (it will if you give it a drive). This option forces format.")
 print("-syslinuxdir      path to syslinux dir containing mbr.bin, ldlinux.c32, etc. distroflash.lua should find this itself.")
+print("-V                display version")
+print("-version          display version")
+print("--version         display version")
 print("-?                this help")
 print("-h                this help")
 print("-help             this help")
@@ -491,6 +562,8 @@ print("")
 print("The above line will WIPE and reformat partitions /dev/sdc1, and install a multiboot menu for bodhi linux, mint, and kali linux")
 
 
+Out:reset()
+os.exit(0)
 end
 
 
@@ -506,7 +579,7 @@ do
 		args[i+1]=""
 	elseif arg=="-c" or arg=="-config"
 	then
-		Settings.distro_list=args[i+1]				
+		Settings.distro_file=args[i+1]				
 		args[i+1]=""
 	elseif arg=="-force"
 	then
@@ -521,6 +594,9 @@ do
 	elseif arg=="-h" or arg=="-?" or arg=="-help" or arg=="--help"
 	then
 		DisplayHelp()
+		elseif arg=="-V" or arg=="-version" or arg=="--version"
+	then
+		DisplayVersion()
 	else
 		Settings.InstallItems=Settings.InstallItems..arg..","
 	end
@@ -554,12 +630,13 @@ end
 
 
 
-function FindRequiredPrograms()
-local progs={"mount","umount","syslinux","mkfs.fat,mkfs.msdos", "sfdisk,parted"}
-local i,prog
+function FindRequiredPrograms(progs)
+local toks, prog
 local result=true
 
-for i,prog in ipairs(progs)
+toks=strutil.TOKENIZER(progs, " ")
+prog=toks:next()
+while prog ~= nil
 do
 	if FindRequiredProgram(prog) == true
 	then
@@ -568,10 +645,12 @@ do
 		Out:puts("~rMISSING:~0 "..prog.."\n")
 		result=false
 	end
+prog=toks:next()
 end
 
 return result
 end
+
 
 
 
@@ -586,10 +665,21 @@ then
 elseif strutil.strlen(Settings.InstallDest) == 0
 then
 	Out:puts("~rERROR:~0 no install destination given. Please supply either a disk, a partition or a mounted directory using the '-d' option.\n")
-elseif FindRequiredPrograms() ~= true
+elseif FindRequiredPrograms("mount umount syslinux mkfs.fat,mkfs.msdos sfdisk,parted") ~= true
 then
 	Out:puts("~rERROR:~0 some required programs are missing. Please install them or add the directories they are installed in to your $PATH.\n")
 else
+
+	if FindRequiredPrograms("blkid") ~= true
+	then
+	Out:puts("~yWARNING:~0 Can't find the 'blkid' program. Some distros (TinyCore,Arch,Calculate,CentOS,NST,SystemRescueCD) may not work.\n")
+	end
+
+	if tonumber(process.lu_get("LibUseful:Version")) < 4.32
+	then
+	Out:puts("~yWARNING:~0 You are using a libUseful older than 4.32. Some distros (CentOS 8) may not work.\n");
+	end
+
 	devtype,removable=DeviceInfoFromSys(Settings.InstallDest)
 
 	SetupDest()
