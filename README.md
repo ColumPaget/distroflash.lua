@@ -77,27 +77,31 @@ distroflash.lua has been seen to work with the following distributions. If anyon
 ## Perfect, runs live and installs from live environment 
 
   * AntiX Linux 19
-  * MX Linux 19.1
+  * ArchLinux 2020.03.01
   * Bodhi Linux 5.0.0
-  * Trisquel-mini 8.0
+  * Deepin Community Desktop 1002
+  * MX Linux 19.1
   * Linux Mint 19.3
   * Ubuntu Desktop 18.04.4
   * LUbuntu Desktop 19.10
+  * Manjaro 20.1.2
   * KUbuntu Desktop 19.10
   * KNOPPIX 8.6.1
   * Peppermint 10
   * Porteus 3.2.2
-	* ArchLinux 2020.03.01
-	* PCLinuxOS 2020.02
+  * PCLinuxOS 2020.02
+  * Slackware 14.2
+  * Trisquel-mini 8.0
+  * ZorinOS 15.3
  
 ## Finiky, can be made to install
  
-	* TinyCorePlus              - has to be told path to core.gz to install (see 'Finiky installs' below)
+  * TinyCorePlus              - has to be told path to core.gz to install (see 'Finiky installs' below)
   * Puppy Linux slacko 6.3.2  - complex install process (see 'Finiky installs' below)
   * Puppy Linux tahr 6.0.5    - complex install process (see 'Finiky installs' below)
   * Salix 14.2                - has to be told to install from harddrive, and given both the device name and path to files on disk
-	* Calculate Linux           - has been seen to install to a vm. Installer has issues with some graphics cards.
-	* CentOS Linux 8.1          - has been seen to install to a vm. Installer crashes on some hardware.
+  * Calculate Linux           - has been seen to install to a vm. Installer has issues with some graphics cards.
+  * CentOS Linux 8.1          - has been seen to install to a vm. Installer crashes on some hardware.
 
 ## Runs live. Might also install from usb to hard-drive if you really know how and the wind is in the right direction
 
@@ -111,7 +115,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Clonezilla 
   * SystemRescueCD 
   * Fatdog Linux 721
-	* Nst Linux 30-11210           - runs live, but installer refuses to install from mounted usb key
+  * Nst Linux 30-11210           - runs live, but installer refuses to install from mounted usb key
   * Puppy Linux xenialpup 7.5    - installs, but installed system doesn't seem to boot
   * Slitaz-rolling               - installer can't find installation files
 

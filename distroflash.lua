@@ -70,16 +70,22 @@ function LoadDistroParseLine(line)
 local toks, str
 local iso_details={}
 
+iso_details.install_type=""
 toks=strutil.TOKENIZER(line, "\\S", "Q")
 str=toks:next()
 while str ~= nil
 do
 	if string.sub(str, 1, 5)=="name=" then iso_details.name=strutil.stripQuotes(string.sub(str, 6)) end
+	if string.sub(str, 1, 13)=="install_type=" then iso_details.install_type=strutil.stripQuotes(string.sub(str, 14)) end
 	if string.sub(str, 1, 3)=="id=" then iso_details.pattern=strutil.stripQuotes(string.sub(str, 4)) end
 	if string.sub(str, 1, 7)=="kernel=" then iso_details.kernel=strutil.stripQuotes(string.sub(str, 8)) end
 	if string.sub(str, 1, 7)=="initrd=" then iso_details.initrd=strutil.stripQuotes(string.sub(str, 8)) end
 	if string.sub(str, 1, 7)=="append=" then iso_details.append=strutil.stripQuotes(string.sub(str, 8)) end
-	if string.sub(str, 1, 12)=="append-live=" then iso_details.append_live=strutil.stripQuotes(string.sub(str, 13)) end
+	if string.sub(str, 1, 12)=="append-live=" 
+	then 
+		iso_details.install_type="live"
+		iso_details.append_live=strutil.stripQuotes(string.sub(str, 13)) 
+	end
 	str=toks:next()
 end
 
@@ -89,23 +95,34 @@ end
 
 function LoadDistroList()
 local S, str, iso_details
+local toks
 
-S=stream.STREAM(Settings.distro_file, "r")
+toks=strutil.TOKENIZER(Settings.distro_file, ":")
+path=toks:next()
+
+while path ~= nil
+do
+
+S=stream.STREAM(path, "r")
 if S ~= nil
 then
 	str=S:readln()
 	while str~= nil
 	do
-	str=strutil.trim(str)
-	if strutil.strlen(str) > 0 and string.sub(str, 1, 1) ~= '#'
-	then
-	iso_details=LoadDistroParseLine(str)
-	table.insert(Settings.iso_list, iso_details)
-	end
-	str=S:readln()
+		str=strutil.trim(str)
+		if strutil.strlen(str) > 0 and string.sub(str, 1, 1) ~= '#'
+		then
+		iso_details=LoadDistroParseLine(str)
+		table.insert(Settings.iso_list, iso_details)
+		end
+		str=S:readln()
 	end
 
 	S:close()
+	break
+end
+
+path=toks:next()
 end
 
 end
@@ -136,6 +153,7 @@ do
 	if ISOFindIDFiles(distro, details.pattern) == true
 	then 
 		distro.name=details.name
+		distro.install_type=details.install_type
 		if strutil.strlen(details.kernel) > 0 then distro.kernel=ISOFindItem(details.kernel, distro.mnt) end
 		if strutil.strlen(details.initrd) > 0 then distro.initrd=ISOFindItem(details.initrd, distro.mnt) end
 		distro.append=details.append
@@ -368,16 +386,16 @@ local from, to
 end
 
 
-function InstallAddSyslinuxEntry(S, name, distro, install_type)
+function InstallAddSyslinuxEntry(S, name, distro)
 
-if install_type=="live" then name=name.."-LIVE" end
+if distro.install_type=="live" then name=name.."-LIVE" end
 
 S:writeln("LABEL "..name.."\n")
 S:writeln("MENU LABEL "..name.."\n")
 if strutil.strlen(distro.kernel) > 0 then S:writeln("KERNEL ".."/"..name..distro.kernel.."\n") end
 if strutil.strlen(distro.initrd) > 0 then S:writeln("INITRD ".."/"..name..distro.initrd.."\n") end
 
-if install_type=="live"
+if distro.install_type=="live"
 then
 	str=string.gsub(distro.append_live, "%$%(distdir%)", name)
 	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
@@ -385,6 +403,8 @@ then
 elseif strutil.strlen(distro.append) > 0
 then
 	str=string.gsub(distro.append, "%$%(distdir%)", name)
+
+	if distro.install_type=="iso" then str=string.gsub(str, "%$%(isoname%)", name..".iso") end
 	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
 	S:writeln("APPEND "..str.."\n")
 end
@@ -394,14 +414,25 @@ end
 
 
 function InstallISO(S, iso_path, distro)
-local name, bootdir
+local name, dest
 
 		name=string.gsub(filesys.basename(iso_path), ".iso$", "")
-		bootdir=Settings.MountPoint.."/"..name.."/"
-		filesys.mkdir(bootdir)
 
-		-- print("COPYDIR: "..distro.mnt, bootdir)
-		filesys.copydir(distro.mnt, bootdir)
+		dest=Settings.MountPoint.."/"..name.."/"
+		filesys.mkdir(dest)
+
+		if distro.install_type=="iso"
+		then
+		filesys.mkdirPath(dest..distro.kernel)
+		filesys.copy(distro.mnt..distro.kernel, dest..distro.kernel)
+
+		filesys.mkdirPath(dest..distro.initrd)
+		filesys.copy(distro.mnt..distro.initrd, dest..distro.initrd)
+
+		filesys.copy(iso_path, dest..name..".iso")
+		else
+		filesys.copydir(distro.mnt, dest)
+		end
 
 		InstallAddSyslinuxEntry(S, name, distro, "")
 		if strutil.strlen(distro.append_live) > 0 then InstallAddSyslinuxEntry(S, name, distro, "live") end
@@ -492,7 +523,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="2.0"
+Settings.Version="3.0"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)
@@ -500,7 +531,9 @@ Settings.SyslinuxMBR="mbr.bin"
 Settings.SyslinuxModules="ldlinux.c32,memdisk,libutil.c32,menu.c32"
 Settings.InstallItems=""
 Settings.Force=false
-Settings.distro_file="/etc/distroflash.conf"
+Settings.distro_file=process.getenv("HOME").."/.config/distroflash.conf"
+Settings.distro_file=Settings.distro_file .. ":"..process.getenv("HOME").."/.distroflash.conf"
+Settings.distro_file=Settings.distro_file .. ":" .. "/etc/distroflash.conf"
 end
 
 
@@ -533,7 +566,7 @@ print("")
 print("-d <device>       destination device to install to. Can be either a partition (e.g. /dev/sda1), or a drive (e.g. /dev/sda)")
 print("-dev <device>     destination device to install to. Can be either a partition, or a drive")
 print("-device <device>  destination device to install to. Can be either a partition, or a drive")
-print("-c <path>         path to distroflash.conf config file, overriding default of /etc/distroflash.conf")
+print("-c <path>         path to distroflash.conf config file, overriding default search path. Multiple paths can be supplied, seperated by ':'. The default is '~/.config/distroflash.conf:~/.distroflash.conf:/etc/distroflash.conf'")
 print("-force            if distroflash objects that a device is not removable (not all devices set this flag) this option forces using the device")
 print("-format           by default distroflash.lua will not format a partition (it will if you give it a drive). This option forces format.")
 print("-syslinuxdir      path to syslinux dir containing mbr.bin, ldlinux.c32, etc. distroflash.lua should find this itself.")
@@ -669,6 +702,13 @@ elseif FindRequiredPrograms("mount umount syslinux mkfs.fat,mkfs.msdos sfdisk,pa
 then
 	Out:puts("~rERROR:~0 some required programs are missing. Please install them or add the directories they are installed in to your $PATH.\n")
 else
+
+	if FindRequiredPrograms("modprobe") == true
+	then
+		os.execute(Settings.programs["modprobe"] .. " loop")
+	else
+	Out:puts("~yWARNING:~0 Can't find the 'modprobe' program. Make sure the module for loopback filesystems ('modprobe loop') is loaded.\n")
+	end
 
 	if FindRequiredPrograms("blkid") ~= true
 	then
