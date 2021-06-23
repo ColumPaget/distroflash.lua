@@ -69,17 +69,21 @@ If distroflash.lua doesn't recognize the distribution that's in an iso file it f
 
 
 
-SUPPORTED LINUX DISTRIBUTIONS
+SUPPORTED O.S. DISTRIBUTIONS
 =============================
 
 distroflash.lua has been seen to work with the following distributions. If anyone knows any tricks to get other distros working from a usb-stick, feel free to mail me at colums.projects@gmail.com
 
-## Perfect, runs live and installs from live environment 
+## Perfect, runs live and/or installs 
 
+  * Android x86 9.0
+  * Android Bliss O.S. v11.12
+  * Android Prime O.S. 0.4.5 
   * AntiX Linux 19
   * ArchLinux 2020.03.01
   * Bodhi Linux 5.0.0
   * Deepin Community Desktop 1002
+  * GRML 2020.06
   * MX Linux 19.1
   * Linux Mint 19.3
   * Ubuntu Desktop 18.04.4
@@ -91,6 +95,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Porteus 3.2.2
   * PCLinuxOS 2020.02
   * Slackware 14.2
+  * Sparky Linux 5.14
   * Trisquel-mini 8.0
   * ZorinOS 15.3
  
