@@ -523,7 +523,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="3.0"
+Settings.Version="3.1"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)
