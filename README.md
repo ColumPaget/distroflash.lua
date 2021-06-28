@@ -79,6 +79,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Android x86 9.0
   * Android Bliss O.S. v11.12
   * Android Prime O.S. 0.4.5 
+  * Android Phoenix O.S. 3.6.1 
   * AntiX Linux 19
   * ArchLinux 2020.03.01
   * Bodhi Linux 5.0.0
@@ -93,6 +94,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * KNOPPIX 8.6.1
   * Peppermint 10
   * Porteus 3.2.2
+  * Q4OS 3.14
   * PCLinuxOS 2020.02
   * Slackware 14.2
   * Sparky Linux 5.14
@@ -104,6 +106,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * TinyCorePlus              - has to be told path to core.gz to install (see 'Finiky installs' below)
   * Puppy Linux slacko 6.3.2  - complex install process (see 'Finiky installs' below)
   * Puppy Linux tahr 6.0.5    - complex install process (see 'Finiky installs' below)
+  * Puppy Linux tahr 6.0.5    - complex install process (see 'Finiky installs' below)
   * Salix 14.2                - has to be told to install from harddrive, and given both the device name and path to files on disk
   * Calculate Linux           - has been seen to install to a vm. Installer has issues with some graphics cards.
   * CentOS Linux 8.1          - has been seen to install to a vm. Installer crashes on some hardware.
@@ -113,6 +116,8 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Slax 9.11.0               - no automated installer, apparently can be installed from live by copying files manually
   * Gentoo                    - no automated installer, apparently can be installed manually from live
   * Damn Small Linux 4.4.10   - difficult to use installer, not had a successful install from it yet, but it may work.
+  * Tooppy Linux  24          - puppy derivative. runs live, haven't made it install yet
+  * Fatdog 8.11               - puppy derivative. runs live, haven't made it install yet
  
 ## Live environment only
  

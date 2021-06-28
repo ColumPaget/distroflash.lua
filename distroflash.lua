@@ -13,6 +13,74 @@ Settings.programs={}
 
 
 
+
+
+
+
+--for binary data it's better to read byte by byte due to issues of passing
+--data including nulls out of the c-functions of libUseful
+function ReadBytes(S, no_of_bytes)
+local str=""
+local i
+
+for i=1,no_of_bytes,1
+do
+str=str..S:getch()
+end
+
+return str
+end
+
+
+function ISOReadDescriptor(S)
+local vtype, trash
+local cdlabel=""
+
+vtype=string.byte(S:getch())
+if vtype==1 --we have a volume descriptor
+then
+	str=ReadBytes(S, 5)   -- always CD001 for all descriptors
+	S:getch()             -- version, always 1
+	S:getch()             -- padding, always 0
+	str=ReadBytes(S, 32)  -- system identifier, whatever that is
+	cdlabel=ReadBytes(S, 32) -- volume label
+else
+	trash=ReadBytes(S, 2047)
+end
+
+return vtype,cdlabel
+end
+
+
+-- returns the volume label/CDLABEL of an iso
+function ISOGetLabel(path)
+local iso_system_area=32768;
+local S, str, vtype
+local cdlabel=""
+
+--1st 32768 bytes is space allocated for putting other headers on an iso
+S=stream.STREAM(path, "r")
+if S ~= nil
+then
+	S:seek(iso_system_area)
+	vtype,str=ISOReadDescriptor(S)
+	while vtype ~= 255
+	do
+	if vtype==1
+	then
+		cdlabel=str
+		break
+	end
+	vtype,str=ISOReadDescriptor(S)
+	end
+	
+	S:close()
+end
+
+return(cdlabel)
+end
+
+
 function FindFiles(pattern_list)
 local toks, pattern, glob, item
 local files={}
@@ -128,16 +196,25 @@ end
 end
 
 
--- a list of file patterns that exist for a given ISO/distro
+-- check a list of file patterns that exist for a given ISO/distro
+-- all patterns must exist, so we return false if one DOESN'T exist
 function ISOFindIDFiles(distro, patterns)
-local toks, pattern
+local toks, pattern, cdpattern
 
 toks=strutil.TOKENIZER(patterns, ",")
 pattern=toks:next()
 while pattern ~= nil
 do
+
+	if string.sub(pattern, 1, 8)=="cdlabel:" 
+	then
+		cdpattern=string.sub(pattern, 9)
+		if strutil.pmatch(cdpattern, distro.cdlabel) == false then return false end
+	else
 	files=FindFiles(distro.mnt..pattern)
 	if #files == 0 then return false end
+	end
+
 	pattern=toks:next()
 end
 
@@ -176,6 +253,7 @@ distro.name="generic"
 distro.kernel=""
 distro.initrd=""
 distro.root_files={}
+distro.cdlabel=ISOGetLabel(path)
 
 mnt="/tmp/.iso_"..process.getpid()
 filesys.mkdir(mnt)
@@ -188,7 +266,7 @@ CategorizeISO(distro)
 if distro.kernel == "" then distro.kernel=ISOFindItem(kernel_names, distro.mnt) end
 if distro.initrd == "" then distro.initrd=ISOFindItem(initrd_names, distro.mnt) end
 
-Out:puts("~c"..filesys.basename(path).."~0  DISTRO: ~e"..distro.name.."~0  kernel="..distro.kernel.."  initrd="..distro.initrd.."\n")
+Out:puts("~c"..filesys.basename(path).."~0  DISTRO: ~e"..distro.name.."~0  kernel="..distro.kernel.."  initrd="..distro.initrd.." cdlabel="..distro.cdlabel .. "\n")
 return distro
 end
 
@@ -399,6 +477,7 @@ if distro.install_type=="live"
 then
 	str=string.gsub(distro.append_live, "%$%(distdir%)", name)
 	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
+	str=string.gsub(str, "%$%(cdlabel%)", distro.cdlabel)
 	S:writeln("APPEND "..str.."\n")
 elseif strutil.strlen(distro.append) > 0
 then
@@ -406,6 +485,7 @@ then
 
 	if distro.install_type=="iso" then str=string.gsub(str, "%$%(isoname%)", name..".iso") end
 	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
+	str=string.gsub(str, "%$%(cdlabel%)", distro.cdlabel)
 	S:writeln("APPEND "..str.."\n")
 end
 
@@ -523,7 +603,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="3.1"
+Settings.Version="3.2"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)
