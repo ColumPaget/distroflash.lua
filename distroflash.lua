@@ -231,8 +231,20 @@ do
 	then 
 		distro.name=details.name
 		distro.install_type=details.install_type
-		if strutil.strlen(details.kernel) > 0 then distro.kernel=ISOFindItem(details.kernel, distro.mnt) end
-		if strutil.strlen(details.initrd) > 0 then distro.initrd=ISOFindItem(details.initrd, distro.mnt) end
+
+		if strutil.strlen(details.kernel) > 0 
+		then
+			if details.kernel == "memdisk" then distro.kernel="memdisk"
+			else distro.kernel=ISOFindItem(details.kernel, distro.mnt)
+			end
+		end
+
+		if strutil.strlen(details.initrd) > 0 
+		then 
+		distro.initrd=ISOFindItem(details.initrd, distro.mnt) 
+		if distro.initrd == "" and distro.kernel == "memdisk" then distro.initrd=details.initrd end
+		end
+
 		distro.append=details.append
 		break
 	end
@@ -464,28 +476,42 @@ local from, to
 end
 
 
+function InstallSubstituteVars(template, name, distro)
+local str
+
+str=string.gsub(template, "%$%(distdir%)", name)
+str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
+str=string.gsub(str, "%$%(cdlabel%)", distro.cdlabel)
+if distro.install_type=="iso" then str=string.gsub(str, "%$%(isoname%)", name..".iso") end
+
+return str
+end
+
+
 function InstallAddSyslinuxEntry(S, name, distro)
+local str
 
 if distro.install_type=="live" then name=name.."-LIVE" end
 
 S:writeln("LABEL "..name.."\n")
 S:writeln("MENU LABEL "..name.."\n")
-if strutil.strlen(distro.kernel) > 0 then S:writeln("KERNEL ".."/"..name..distro.kernel.."\n") end
-if strutil.strlen(distro.initrd) > 0 then S:writeln("INITRD ".."/"..name..distro.initrd.."\n") end
+if strutil.strlen(distro.kernel) > 0
+then 
+	if distro.kernel=="memdisk" then S:writeln("KERNEL " .. "/boot/memdisk\n") 
+	else S:writeln("KERNEL " .. "/"..name..distro.kernel.."\n") 
+	end
+end
+
+str=InstallSubstituteVars(distro.initrd, name, distro)
+if strutil.strlen(distro.initrd) > 0 then S:writeln("INITRD " .. "/" .. name .. str .. "\n") end
 
 if distro.install_type=="live"
 then
-	str=string.gsub(distro.append_live, "%$%(distdir%)", name)
-	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
-	str=string.gsub(str, "%$%(cdlabel%)", distro.cdlabel)
+	str=InstallSubstituteVars(distro.append_live, name, distro)
 	S:writeln("APPEND "..str.."\n")
 elseif strutil.strlen(distro.append) > 0
 then
-	str=string.gsub(distro.append, "%$%(distdir%)", name)
-
-	if distro.install_type=="iso" then str=string.gsub(str, "%$%(isoname%)", name..".iso") end
-	str=string.gsub(str, "%$%(uuid%)", Settings.DestUUID)
-	str=string.gsub(str, "%$%(cdlabel%)", distro.cdlabel)
+	str=InstallSubstituteVars(distro.append, name, distro)
 	S:writeln("APPEND "..str.."\n")
 end
 
@@ -608,7 +634,7 @@ Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)
 Settings.SyslinuxMBR="mbr.bin"
-Settings.SyslinuxModules="ldlinux.c32,memdisk,libutil.c32,menu.c32"
+Settings.SyslinuxModules="ldlinux.c32,memdisk,libutil.c32,menu.c32,memdisk"
 Settings.InstallItems=""
 Settings.Force=false
 Settings.distro_file=process.getenv("HOME").."/.config/distroflash.conf"
