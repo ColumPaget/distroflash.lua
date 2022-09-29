@@ -161,9 +161,16 @@ return iso_details
 end
 
 
+--lines in config should at least have a name and an id-pattern, if they don't, then something is wrong
+function LoadDistroValidate(iso_details)
+if iso_details.name == nil then return false end
+if iso_details.pattern == nil then return false end
+return true
+end
+
 function LoadDistroList()
-local S, str, iso_details
-local toks
+local S, str, toks, iso_details
+local line=0
 
 toks=strutil.TOKENIZER(Settings.distro_file, ":")
 path=toks:next()
@@ -180,9 +187,13 @@ then
 		str=strutil.trim(str)
 		if strutil.strlen(str) > 0 and string.sub(str, 1, 1) ~= '#'
 		then
-		iso_details=LoadDistroParseLine(str)
-		table.insert(Settings.iso_list, iso_details)
+			iso_details=LoadDistroParseLine(str)
+			if LoadDistroValidate(iso_details) == true then table.insert(Settings.iso_list, iso_details)
+			else io.stderr:write("ERROR in line ".. line .. " of '" .. path .. "'  " .. str .. "\n")
+			end
 		end
+
+		line=line+1
 		str=S:readln()
 	end
 
@@ -629,7 +640,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="3.3"
+Settings.Version="3.4"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)

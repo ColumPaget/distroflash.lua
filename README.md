@@ -82,24 +82,32 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Android Phoenix O.S. 3.6.1 
   * AntiX Linux 19
   * ArchLinux 2020.03.01
+  * Berry Linux 1.35 
+  * ClearOS 
   * Bodhi Linux 5.0.0
   * Deepin Community Desktop 1002
+  * Gentoo
   * GRML 2020.06
   * MX Linux 19.1
   * Linux Mint 19.3
-  * Ubuntu Desktop 18.04.4
   * LUbuntu Desktop 19.10
-  * Manjaro 20.1.2
   * KUbuntu Desktop 19.10
   * KNOPPIX 8.6.1
+  * Manjaro 20.1.2
+  * Memtest86+
   * Peppermint 10
+  * PhoenixOS 
+  * PCLinixOS
   * Porteus 3.2.2
   * Q4OS 3.14
   * PCLinuxOS 2020.02
+  * SeaTools
   * Slackware 14.2
   * Sparky Linux 5.14
+  * GRC SpinRite
   * Trisquel-mini 8.0
   * ZorinOS 15.3
+  * Ubuntu Desktop 18.04.4
  
 ## Finiky, can be made to install
  
