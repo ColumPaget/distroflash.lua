@@ -82,10 +82,10 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Android Phoenix O.S. 3.6.1 
   * AntiX Linux 19
   * ArchLinux 2020.03.01
-  * Berry Linux 1.35 
   * ClearOS 
   * Bodhi Linux 5.0.0
   * Deepin Community Desktop 1002
+  * Fedora Workstation 33-1.2
   * Gentoo
   * GRML 2020.06
   * MX Linux 19.1
@@ -126,6 +126,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Damn Small Linux 4.4.10   - difficult to use installer, not had a successful install from it yet, but it may work.
   * Tooppy Linux  24          - puppy derivative. runs live, haven't made it install yet
   * Fatdog 8.11               - puppy derivative. runs live, haven't made it install yet
+  * Berry Linux 1.35 
  
 ## Live environment only
  
