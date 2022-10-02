@@ -143,17 +143,18 @@ toks=strutil.TOKENIZER(line, "\\S", "Q")
 str=toks:next()
 while str ~= nil
 do
-	if string.sub(str, 1, 5)=="name=" then iso_details.name=strutil.stripQuotes(string.sub(str, 6)) end
-	if string.sub(str, 1, 13)=="install_type=" then iso_details.install_type=strutil.stripQuotes(string.sub(str, 14)) end
-	if string.sub(str, 1, 3)=="id=" then iso_details.pattern=strutil.stripQuotes(string.sub(str, 4)) end
-	if string.sub(str, 1, 7)=="kernel=" then iso_details.kernel=strutil.stripQuotes(string.sub(str, 8)) end
-	if string.sub(str, 1, 7)=="initrd=" then iso_details.initrd=strutil.stripQuotes(string.sub(str, 8)) end
-	if string.sub(str, 1, 7)=="append=" then iso_details.append=strutil.stripQuotes(string.sub(str, 8)) end
+	if string.sub(str, 1, 5) == "name=" then iso_details.name=strutil.stripQuotes(string.sub(str, 6)) end
+	if string.sub(str, 1, 13) == "install_type=" then iso_details.install_type=strutil.stripQuotes(string.sub(str, 14)) end
+	if string.sub(str, 1, 3) == "id=" then iso_details.pattern=strutil.stripQuotes(string.sub(str, 4)) end
+	if string.sub(str, 1, 7) == "kernel=" then iso_details.kernel=strutil.stripQuotes(string.sub(str, 8)) end
+	if string.sub(str, 1, 7) == "initrd=" then iso_details.initrd=strutil.stripQuotes(string.sub(str, 8)) end
+	if string.sub(str, 1, 7) == "append=" then iso_details.append=strutil.stripQuotes(string.sub(str, 8)) end
 	if string.sub(str, 1, 12)=="append-live=" 
 	then 
 		iso_details.install_type="live"
 		iso_details.append_live=strutil.stripQuotes(string.sub(str, 13)) 
 	end
+
 	str=toks:next()
 end
 
@@ -168,15 +169,11 @@ if iso_details.pattern == nil then return false end
 return true
 end
 
-function LoadDistroList()
+
+function LoadDistroFile(path)
 local S, str, toks, iso_details
 local line=0
-
-toks=strutil.TOKENIZER(Settings.distro_file, ":")
-path=toks:next()
-
-while path ~= nil
-do
+local retval=false
 
 S=stream.STREAM(path, "r")
 if S ~= nil
@@ -184,6 +181,7 @@ then
 	str=S:readln()
 	while str~= nil
 	do
+		retval=true
 		str=strutil.trim(str)
 		if strutil.strlen(str) > 0 and string.sub(str, 1, 1) ~= '#'
 		then
@@ -198,9 +196,21 @@ then
 	end
 
 	S:close()
-	break
 end
 
+return retval
+end
+
+
+
+function LoadDistroList()
+local toks, path
+
+toks=strutil.TOKENIZER(Settings.distro_file, ":")
+path=toks:next()
+while path ~= nil
+do
+if LoadDistroFile(path) == true then break end
 path=toks:next()
 end
 
@@ -648,9 +658,11 @@ Settings.SyslinuxMBR="mbr.bin"
 Settings.SyslinuxModules="ldlinux.c32,memdisk,libutil.c32,menu.c32,memdisk"
 Settings.InstallItems=""
 Settings.Force=false
-Settings.distro_file=process.getenv("HOME").."/.config/distroflash.conf"
-Settings.distro_file=Settings.distro_file .. ":"..process.getenv("HOME").."/.distroflash.conf"
-Settings.distro_file=Settings.distro_file .. ":" .. "/etc/distroflash.conf"
+
+str=process.getenv("HOME").."/.config/distroflash.conf"
+str=str .. ":"..process.getenv("HOME").."/.distroflash.conf"
+str=str .. ":" .. "/etc/distroflash.conf"
+Settings.distro_file=str
 end
 
 
@@ -847,3 +859,4 @@ else
 end
 
 Out:reset()
+
