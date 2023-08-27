@@ -289,17 +289,21 @@ distro.root_files={}
 distro.cdlabel=ISOGetLabel(path)
 
 mnt="/tmp/.iso_"..process.getpid()
-filesys.mkdir(mnt)
+if filesys.mkdir(mnt) == true
+then
+  os.execute(Settings.programs["mount"] .. " -oloop,ro '"..path.."' '"..mnt.."'")
 
-os.execute(Settings.programs["mount"] .. " -oloop,ro '"..path.."' '"..mnt.."'")
+  distro.mnt=mnt.."/"
+  CategorizeISO(distro)
 
-distro.mnt=mnt.."/"
-CategorizeISO(distro)
+  if distro.kernel == "" then distro.kernel=ISOFindItem(kernel_names, distro.mnt) end
+  if distro.initrd == "" then distro.initrd=ISOFindItem(initrd_names, distro.mnt) end
 
-if distro.kernel == "" then distro.kernel=ISOFindItem(kernel_names, distro.mnt) end
-if distro.initrd == "" then distro.initrd=ISOFindItem(initrd_names, distro.mnt) end
+  Out:puts("~c"..filesys.basename(path).."~0  DISTRO: ~e"..distro.name.."~0  kernel="..distro.kernel.."  initrd="..distro.initrd.." cdlabel="..distro.cdlabel .. "\n")
+else
+  Out:puts("~rERROR:~0 cannot create ISO mount-point " .. path .. "\n")
+end
 
-Out:puts("~c"..filesys.basename(path).."~0  DISTRO: ~e"..distro.name.."~0  kernel="..distro.kernel.."  initrd="..distro.initrd.." cdlabel="..distro.cdlabel .. "\n")
 return distro
 end
 
@@ -487,11 +491,11 @@ local from, to
 	-- must do this here, in case we reformatted the disk. Every new filesystem has a new uuid.
 	Settings.DestUUID=PartitionUUID(Settings.InstallDest)
 
-	if filesys.mount(Settings.InstallDest, Settings.MountPoint, "vfat") ==true
+	if filesys.mount(Settings.InstallDest, Settings.MountPoint, "vfat") == true
 	then
-		print("mounted: "..Settings.InstallDest.." on "..Settings.MountPoint )
+		Out:puts("~gmounted:~0 "..Settings.InstallDest.." on "..Settings.MountPoint .. "\n")
 	else
-		print("mount failed: "..Settings.InstallDest.." on "..Settings.MountPoint )
+		Out:puts("~rERROR:~0 mount failed: "..Settings.InstallDest.." on "..Settings.MountPoint .. "\n")
 	end
 
 end
@@ -650,7 +654,7 @@ end
 function InitConfig()
 local str
 
-Settings.Version="3.5"
+Settings.Version="3.6"
 Settings.MountPoint="/mnt"
 str=string.gsub(process.getenv("PATH"), "/bin", "/share")
 Settings.SyslinuxDir=filesys.find("syslinux", str)

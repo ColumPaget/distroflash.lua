@@ -95,6 +95,8 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * KNOPPIX 8.6.1
   * Manjaro 20.1.2
   * Memtest86+
+	* Neptune 8
+  * ParrotOS 5.3
   * Peppermint 10
   * PhoenixOS 
   * PCLinixOS
@@ -111,6 +113,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
  
 ## Finiky, can be made to install
  
+	* 4MLinux                   - destination disk must be /dev/sda
   * TinyCorePlus              - has to be told path to core.gz to install (see 'Finiky installs' below)
   * Puppy Linux slacko 6.3.2  - complex install process (see 'Finiky installs' below)
   * Puppy Linux tahr 6.0.5    - complex install process (see 'Finiky installs' below)
@@ -118,6 +121,7 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Salix 14.2                - has to be told to install from harddrive, and given both the device name and path to files on disk
   * Calculate Linux           - has been seen to install to a vm. Installer has issues with some graphics cards.
   * CentOS Linux 8.1          - has been seen to install to a vm. Installer crashes on some hardware.
+  * WattOS R12                - installer fails if live distro not connected to internet
 
 ## Runs live. Might also install from usb to hard-drive if you really know how and the wind is in the right direction
 
@@ -137,7 +141,8 @@ distroflash.lua has been seen to work with the following distributions. If anyon
   * Nst Linux 30-11210           - runs live, but installer refuses to install from mounted usb key
   * Puppy Linux xenialpup 7.5    - installs, but installed system doesn't seem to boot
   * Slitaz-rolling               - installer can't find installation files
-
+  * Tails 5                      - refuses to install except to usb drives
+  * WMLive                       
 
 
 ## Finiky installs
